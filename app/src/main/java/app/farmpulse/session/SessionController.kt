@@ -121,6 +121,7 @@ object SessionController {
      */
     fun onRaidDue(context: Context) {
         if (!_state.value.running) return
+        if (_state.value.phase == SessionPhase.AWAITING_SEND) return
         _state.update {
             it.copy(
                 phase = SessionPhase.AWAITING_SEND,
