@@ -178,9 +178,19 @@ object SessionController {
             return false
         }
         _state.update { it.copy(bindPhase = BindPhase.WAITING_FOR_TRAVIAN_CLICK) }
-        FarmPulseAccessibilityService.instance?.setBindMode(true)
+        val service = FarmPulseAccessibilityService.instance
+        if (service == null) {
+            _state.update { it.copy(bindPhase = BindPhase.IDLE) }
+            setStatus("Accessibility service is not connected. Toggle it off and on, then bind again.")
+            return false
+        }
+        if (!service.setBindMode(true)) {
+            _state.update { it.copy(bindPhase = BindPhase.IDLE) }
+            setStatus("Could not show the bind target overlay. Turn Accessibility off and on, then try again.")
+            return false
+        }
         AppPermissions.launchTravian(context)
-        setStatus("Bind mode: open the farmlist and tap the Send button in Travian Legends.")
+        setStatus("Bind mode: open the farmlist, drag the target onto Send, then tap Confirm bind. Travian may not expose buttons to Accessibility.")
         return true
     }
 
@@ -200,7 +210,12 @@ object SessionController {
             )
         }
         appContext?.let { Haptics.confirm(it) }
-        setStatus("Farmlist Send bound. You can start a session when the phone is unlocked.")
+        val how = if (binding.isCoordinate) {
+            "Screen target saved at ${pct(binding.relativeX)}, ${pct(binding.relativeY)}."
+        } else {
+            "Accessibility node saved."
+        }
+        setStatus("$how You can start a session when the phone is unlocked.")
     }
 
     fun clearBinding() {
@@ -242,6 +257,8 @@ object SessionController {
         }
         FarmSessionService.reschedule(context.applicationContext)
     }
+
+    private fun pct(value: Float): String = "${(value * 100f).toInt()}%"
 
     private const val TRAVIAN_HINT = "com.traviangames.travianlegendsmobile"
 }

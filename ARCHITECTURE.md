@@ -19,11 +19,13 @@ WorkManager is the wrong primitive for a raid interval the user is staring at. T
 
 ## Binding and click
 
-Bind mode listens for `TYPE_VIEW_CLICKED` whose package is `com.traviangames.travianlegendsmobile`. The clicked (or nearest clickable) node is snapshotted: view id, text, contentDescription, screen-relative center, and a parent-path fingerprint (class + viewId + sibling index).
+Travian Legends is typically a game canvas: it does not emit `TYPE_VIEW_CLICKED`. Bind mode therefore shows a movable crosshair overlay (`TYPE_ACCESSIBILITY_OVERLAY`, touches outside pass through). The user places the target on Send and taps **Confirm bind**. That stores `com.traviangames.travianlegendsmobile` plus relative X/Y (and the pixel center). viewId / text / path stay empty.
 
-Click order after the user taps Send:
+If a real Travian click event ever arrives, the node snapshot is still stored (view id, label, parent-path fingerprint, relative center).
 
-1. `findAccessibilityNodeInfosByViewId`
+Click order after the user taps FarmPulse Send (never on the timer, never on Confirm bind):
+
+1. `findAccessibilityNodeInfosByViewId` (skipped for coordinate-only binds)
 2. text / contentDescription
 3. walk the parent-path fingerprint
 4. `ACTION_CLICK` on the node or a clickable ancestor

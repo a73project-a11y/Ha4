@@ -25,6 +25,7 @@ import app.farmpulse.MainActivity
 import app.farmpulse.R
 import app.farmpulse.ShowWhenLockedActivity
 import app.farmpulse.receiver.RaidAlarmReceiver
+import app.farmpulse.session.BindPhase
 import app.farmpulse.session.SessionController
 import app.farmpulse.session.SessionPhase
 import app.farmpulse.util.DeviceLock
@@ -116,7 +117,7 @@ class FarmSessionService : LifecycleService() {
 
     private fun refreshUi() {
         val state = SessionController.state.value
-        if (!state.running) {
+        if (!state.running || state.bindPhase != BindPhase.IDLE) {
             overlay?.dismiss()
             FarmPulseAccessibilityService.instance?.overlay()?.dismiss()
             return

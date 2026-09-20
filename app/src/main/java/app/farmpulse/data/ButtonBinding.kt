@@ -17,7 +17,16 @@ data class ButtonBinding(
     val screenHeight: Int = 0,
     val parentPathFingerprint: String = "",
     val boundAtMillis: Long = 0L,
-)
+    /** "node" when captured from TYPE_VIEW_CLICKED; "coordinate" for overlay confirm. */
+    val kind: String = KIND_NODE,
+) {
+    val isCoordinate: Boolean get() = kind == KIND_COORDINATE
+
+    companion object {
+        const val KIND_NODE = "node"
+        const val KIND_COORDINATE = "coordinate"
+    }
+}
 
 @Serializable
 data class PathSegment(

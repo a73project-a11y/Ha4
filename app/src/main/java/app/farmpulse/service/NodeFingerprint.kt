@@ -31,6 +31,7 @@ object NodeFingerprint {
             screenHeight = screenHeight,
             parentPathFingerprint = encode(walk(node)),
             boundAtMillis = System.currentTimeMillis(),
+            kind = ButtonBinding.KIND_NODE,
         )
     }
 

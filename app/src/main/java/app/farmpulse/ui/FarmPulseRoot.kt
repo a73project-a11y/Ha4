@@ -120,7 +120,7 @@ private fun Onboarding(
                 }
                 1 -> {
                     Heading("How a session works")
-                    Body("1. Bind the farmlist Send button once.")
+                    Body("1. Bind the farmlist Send control once (place the target and confirm).")
                     Body("2. Start a session while the phone is logically unlocked.")
                     Body("3. Overlay counts down. At 0:00 the phone vibrates — no sound.")
                     Body("4. A big Send control appears. You tap it.")
@@ -169,7 +169,8 @@ private fun Onboarding(
                 }
                 else -> {
                     Heading("Bind one farmlist Send")
-                    Body("Open Travian Legends, go to the farm list you want, tap Bind, then tap that Send button. FarmPulse stores the view id, label, parent path, and relative tap point. Only this one control is used.")
+                    Body("Travian may not expose buttons to Accessibility — place the target on Send and confirm.")
+                    Body("Tap Bind Send, open the farm list, drag the crosshair onto Send, then tap Confirm bind. If Travian ever reports a real click, that node is stored instead. Only one control is saved.")
                     StatusLine("Travian Legends installed", permissions.travianInstalled)
                     StatusLine("Accessibility on", permissions.accessibilityEnabled)
                 }
@@ -295,13 +296,25 @@ private fun Dashboard(
 
         CardBlock {
             Text("Farmlist Send binding", fontWeight = FontWeight.SemiBold, color = Wheat)
+            Text(
+                "Travian may not expose buttons to Accessibility — place the target on Send and confirm.",
+                color = Muted,
+                fontSize = 13.sp,
+            )
             if (session.binding == null) {
-                Text("No button saved. Bind the Send control in native Travian Legends.", color = Muted)
+                Text("No target saved yet.", color = Muted)
             } else {
                 val b = session.binding
                 Text("Package: ${b.packageName}", fontSize = 13.sp)
-                Text("viewId: ${b.viewIdResourceName ?: "—"}", fontSize = 13.sp)
-                Text("label: ${b.text ?: b.contentDescription ?: "—"}", fontSize = 13.sp)
+                if (b.isCoordinate) {
+                    Text(
+                        "Screen target: ${(b.relativeX * 100).toInt()}% × ${(b.relativeY * 100).toInt()}%",
+                        fontSize = 13.sp,
+                    )
+                } else {
+                    Text("viewId: ${b.viewIdResourceName ?: "—"}", fontSize = 13.sp)
+                    Text("label: ${b.text ?: b.contentDescription ?: "—"}", fontSize = 13.sp)
+                }
                 val whenBound = DateFormat.getDateTimeInstance().format(Date(b.boundAtMillis))
                 Text("saved $whenBound", color = Muted, fontSize = 12.sp)
             }
@@ -311,7 +324,7 @@ private fun Dashboard(
                     onClick = { SessionController.beginBind(context) },
                     enabled = permissions.accessibilityEnabled && !binding,
                     modifier = Modifier.weight(1f),
-                ) { Text(if (binding) "Waiting for tap…" else "Bind Send") }
+                ) { Text(if (binding) "Place target…" else "Bind Send") }
                 OutlinedButton(
                     onClick = { SessionController.cancelBind() },
                     enabled = binding,

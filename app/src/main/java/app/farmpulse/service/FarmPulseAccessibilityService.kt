@@ -22,27 +22,37 @@ class FarmPulseAccessibilityService : AccessibilityService() {
     private var bindMode: Boolean = false
 
     private var a11yOverlay: OverlayController? = null
+    private var bindOverlay: BindTargetOverlay? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        val overlayType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+        }
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         a11yOverlay = OverlayController(
             host = this,
-            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager,
-            windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-            } else {
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
-            },
+            windowManager = wm,
+            windowType = overlayType,
             extraFlags = 0,
             format = PixelFormat.TRANSLUCENT,
+        )
+        bindOverlay = BindTargetOverlay(
+            host = this,
+            windowManager = wm,
+            windowType = overlayType,
         )
         SessionController.refreshFromDisk()
     }
 
     override fun onUnbind(intent: android.content.Intent?): Boolean {
         if (instance === this) instance = null
+        bindOverlay?.dismiss()
+        bindOverlay = null
         a11yOverlay?.dismiss()
         a11yOverlay = null
         return super.onUnbind(intent)
@@ -50,6 +60,8 @@ class FarmPulseAccessibilityService : AccessibilityService() {
 
     override fun onDestroy() {
         if (instance === this) instance = null
+        bindOverlay?.dismiss()
+        bindOverlay = null
         a11yOverlay?.dismiss()
         a11yOverlay = null
         super.onDestroy()
@@ -57,8 +69,14 @@ class FarmPulseAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() = Unit
 
-    fun setBindMode(enabled: Boolean) {
+    fun setBindMode(enabled: Boolean): Boolean {
         bindMode = enabled
+        if (enabled) {
+            a11yOverlay?.dismiss()
+            return bindOverlay?.show() == true
+        }
+        bindOverlay?.dismiss()
+        return true
     }
 
     fun overlay(): OverlayController? = a11yOverlay
@@ -89,58 +107,60 @@ class FarmPulseAccessibilityService : AccessibilityService() {
         val binding = AppPreferences.binding ?: return SendResult.NoBinding
 
         val roots = travianRoots()
-        if (roots.isEmpty()) return SendResult.RebindRequired
-
         try {
-            // 1. viewIdResourceName
-            binding.viewIdResourceName?.takeIf { it.isNotBlank() }?.let { viewId ->
-                for (root in roots) {
-                    val matches = root.findAccessibilityNodeInfosByViewId(viewId)
-                    val clicked = matches?.firstOrNull { clickNode(it) }
-                    matches?.forEach { if (it != clicked) it.recycle() }
-                    if (clicked != null) {
-                        clicked.recycle()
-                        return SendResult.Sent
+            if (!binding.isCoordinate) {
+                // 1. viewIdResourceName
+                binding.viewIdResourceName?.takeIf { it.isNotBlank() }?.let { viewId ->
+                    for (root in roots) {
+                        val matches = root.findAccessibilityNodeInfosByViewId(viewId)
+                        val clicked = matches?.firstOrNull { clickNode(it) }
+                        matches?.forEach { if (it != clicked) it.recycle() }
+                        if (clicked != null) {
+                            clicked.recycle()
+                            return SendResult.Sent
+                        }
+                    }
+                }
+
+                // 2. text, then contentDescription
+                val labels = listOfNotNull(binding.text, binding.contentDescription)
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .distinct()
+                for (label in labels) {
+                    for (root in roots) {
+                        val matches = root.findAccessibilityNodeInfosByText(label)
+                        val clicked = matches?.firstOrNull { node ->
+                            val textOk = node.text?.toString()?.trim() == label ||
+                                node.contentDescription?.toString()?.trim() == label
+                            textOk && clickNode(node)
+                        }
+                        matches?.forEach { if (it != clicked) it.recycle() }
+                        if (clicked != null) {
+                            clicked.recycle()
+                            return SendResult.Sent
+                        }
+                    }
+                }
+
+                // 3. parent path fingerprint
+                if (binding.parentPathFingerprint.isNotBlank()) {
+                    for (root in roots) {
+                        val node = NodeFingerprint.resolveByPath(root, binding.parentPathFingerprint)
+                        if (node != null && clickNode(node)) {
+                            return SendResult.Sent
+                        }
                     }
                 }
             }
 
-            // 2. text, then contentDescription
-            val labels = listOfNotNull(binding.text, binding.contentDescription)
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .distinct()
-            for (label in labels) {
-                for (root in roots) {
-                    val matches = root.findAccessibilityNodeInfosByText(label)
-                    val clicked = matches?.firstOrNull { node ->
-                        val textOk = node.text?.toString()?.trim() == label ||
-                            node.contentDescription?.toString()?.trim() == label
-                        textOk && clickNode(node)
-                    }
-                    matches?.forEach { if (it != clicked) it.recycle() }
-                    if (clicked != null) {
-                        clicked.recycle()
-                        return SendResult.Sent
-                    }
-                }
-            }
-
-            // 3. parent path fingerprint
-            if (binding.parentPathFingerprint.isNotBlank()) {
-                for (root in roots) {
-                    val node = NodeFingerprint.resolveByPath(root, binding.parentPathFingerprint)
-                    if (node != null && clickNode(node)) {
-                        return SendResult.Sent
-                    }
-                }
-            }
-
-            // 4. fallback: gesture at relative screen coordinates
+            // 4. gesture at relative screen coordinates (primary path for canvas binds)
             val metrics = resources.displayMetrics
             val x = binding.relativeX * metrics.widthPixels
             val y = binding.relativeY * metrics.heightPixels
-            if (x > 0f && y > 0f && dispatchClick(x, y)) {
+            val onScreen = x in 0f..metrics.widthPixels.toFloat() &&
+                y in 0f..metrics.heightPixels.toFloat()
+            if (onScreen && dispatchClick(x, y)) {
                 return SendResult.Sent
             }
         } finally {

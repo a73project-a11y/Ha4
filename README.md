@@ -58,11 +58,13 @@ Farm sessions require `KeyguardManager.isDeviceLocked() == false`.
 
 ## Bind the farmlist Send button
 
+Travian’s game canvas often does **not** emit Accessibility click events. FarmPulse therefore binds a **screen target**, not a hidden view id.
+
 1. Install official **Travian Legends** (`com.traviangames.travianlegendsmobile`). Chrome Travian is not supported.
 2. Enable the FarmPulse accessibility service.
-3. In Travian, open the farm list you want.
-4. In FarmPulse tap **Bind Send**, then tap that **Send** control in Travian.
-5. FarmPulse stores package, `viewIdResourceName`, text / contentDescription, bounds center + relative %, and a parent-path fingerprint.
+3. Open the farm list you want, tap **Bind Send** in FarmPulse, drag the crosshair onto **Send**, then tap **Confirm bind**.
+
+If Travian ever reports a real `TYPE_VIEW_CLICKED`, that node is stored as well (view id, label, parent path). Otherwise FarmPulse keeps package + relative X/Y (%) and later `dispatchGesture`s at that point — only after **you** tap FarmPulse Send. Confirm bind does not send troops.
 
 Only **one** binding is saved. Multi-farmlist is a non-goal.
 
@@ -71,7 +73,7 @@ Only **one** binding is saved. Multi-farmlist is a non-goal.
 1. Unlock the phone. Pick an interval (default **10 minutes**).
 2. Tap **Start session**. A silent foreground notification starts counting down. An overlay chip appears while unlocked.
 3. At 0:00 the phone **vibrates only** (no sound). A big **Send** control appears.
-4. You tap **Send**. The accessibility service clicks the bound Travian button (viewId → text → parent path → `ACTION_CLICK`, then a coordinate gesture). If none of that works: **Rebind required**.
+4. You tap **Send**. The accessibility service tries viewId → text → parent path → `ACTION_CLICK`, then a coordinate gesture at the saved relative point. If none of that works: **Rebind required**.
 5. The next interval arms only after a successful user-confirmed Send.
 
 The timer **never** clicks Travian by itself.
@@ -92,7 +94,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 - No Play Store listing, no Origin, no root, no Travian HTTP/API.
 - No auto-send, no secure-keyguard click-through.
 - Session does not survive reboot.
-- Overlay / click quality depends on Travian exposing real accessibility nodes. A single game canvas may need the coordinate fallback — rebind if the layout moves.
+- Overlay / click quality depends on keeping the farm list in the same place you bound. A game canvas uses the coordinate target — rebind if the layout moves.
 - Samsung One UI may still kill background work if battery is not Unrestricted.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the pieces fit.
