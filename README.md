@@ -1,8 +1,8 @@
 # FarmPulse
 
-Sideloaded Android MVP for Pavel’s **Samsung Galaxy S25 Ultra** (One UI 7 / Android 15).
+Sideloaded Android MVP for native Travian Legends (debug APK, not listed on Play Store).
 
-FarmPulse is a **native Travian Legends** farm-list helper. It runs an interval timer, vibrates when the interval elapses, and waits for **you** to tap Send. Only then does its AccessibilityService click the one farmlist Send button you bound.
+FarmPulse is a farm-list helper. It runs an interval timer, vibrates when the interval elapses, and waits for **you** to tap Send. Only then does its AccessibilityService click the one farmlist Send button you bound.
 
 It does **not** talk to Travian servers. It does **not** auto-send. It does **not** click through a secure lock screen.
 
@@ -14,15 +14,15 @@ It does **not** talk to Travian servers. It does **not** auto-send. It does **no
 | Stack | Kotlin, Jetpack Compose, AccessibilityService, AlarmManager, specialUse FGS |
 | minSdk / target | 26 / 35 |
 
-## Sideload on Galaxy S25 Ultra (One UI 7)
+## Sideload on your device
 
 1. Copy `artifacts/farmpulse-debug.apk` to the phone (USB, Drive, or Messages).
-2. **Auto Blocker** (Security and privacy) blocks unknown installs. Turn Auto Blocker **off** for this setup, or you will not be able to install or enable Accessibility.
+2. On **Samsung One UI**, **Auto Blocker** (Security and privacy) can block unknown installs. Turn Auto Blocker **off** for this setup, or you may not be able to install or enable Accessibility.
 3. Open the APK with Files / My Files. Allow **Install unknown apps** for that installer.
-4. After install, open **Settings → Apps → FarmPulse → ⋮ → Allow restricted settings**. Sideloaded apps cannot enable Accessibility until this is granted (Android 13+ / One UI).
+4. After install, open **Settings → Apps → FarmPulse → ⋮ → Allow restricted settings**. Sideloaded apps cannot enable Accessibility until this is granted (Android 13+; on Samsung One UI this is easy to miss).
 5. Do **not** look for FarmPulse on the Play Store. This build is debug-signed for sideload only.
 
-### Samsung blockers that stop the helper
+### OEM blockers that stop the helper
 
 | Blocker | What happens | Fix |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ It does **not** talk to Travian servers. It does **not** auto-send. It does **no
 | Appear on top denied | Overlay missing (a11y overlay is the fallback) | Appear on top → FarmPulse → Allow |
 | Notifications denied | Silent chronometer not shown | Notifications → Allow |
 
-FarmPulse’s onboarding deep-links as many of these screens as One UI exposes.
+FarmPulse’s onboarding deep-links as many of these screens as the OEM exposes.
 
 ## Permissions (onboarding checklist)
 
@@ -93,6 +93,6 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 - No auto-send, no secure-keyguard click-through.
 - Session does not survive reboot.
 - Overlay / click quality depends on Travian exposing real accessibility nodes. A single game canvas may need the coordinate fallback — rebind if the layout moves.
-- One UI may still kill background work if battery is not Unrestricted.
+- Samsung One UI may still kill background work if battery is not Unrestricted.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the pieces fit.

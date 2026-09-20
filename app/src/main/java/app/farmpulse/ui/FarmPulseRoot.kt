@@ -136,7 +136,7 @@ private fun Onboarding(
                 }
                 3 -> {
                     Heading("Permissions")
-                    Body("Sideloaded apps on One UI 7 need an extra step before Accessibility can be turned on: App info → ⋮ → Allow restricted settings. Auto Blocker can hide that switch.")
+                    Body("Sideloaded apps on Samsung One UI need an extra step before Accessibility can be turned on: App info → ⋮ → Allow restricted settings. Auto Blocker can hide that switch.")
                     PermRow("Accessibility", permissions.accessibilityEnabled) {
                         context.startActivity(AppPermissions.accessibilitySettings())
                     }
@@ -153,8 +153,8 @@ private fun Onboarding(
                     TextButton(onClick = onRefreshPermissions) { Text("Re-check permissions") }
                 }
                 4 -> {
-                    Heading("Samsung Galaxy S25 Ultra")
-                    Body("One UI will sleep a sideloaded helper unless battery is Unrestricted and the app is in Never sleeping apps.")
+                    Heading("Samsung One UI")
+                    Body("Samsung One UI may sleep a sideloaded helper unless battery is Unrestricted and the app is in Never sleeping apps.")
                     Body("Auto Blocker (Security and privacy) blocks unknown-app installs and restricted settings. Turn it off for this setup, or install then use Allow restricted settings.")
                     Button(onClick = { context.startActivity(AppPermissions.batteryOptimizationSettings(context)) }) {
                         Text("Battery unrestricted")

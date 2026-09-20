@@ -66,8 +66,8 @@
 
         <!--
             specialUse FGS: holds farm-session timer state, a silent ongoing
-            chronometer notification, and overlay keep-alive while Pavel is
-            farming. It ticks the countdown UI and schedules AlarmManager.
+            chronometer notification, and overlay keep-alive while a farm
+            session is running. It ticks the countdown UI and schedules AlarmManager.
             It NEVER auto-clicks Travian and never talks to Travian servers.
             WorkManager is the wrong primitive for an exact user-facing raid
             interval, so this service exists as the session host.

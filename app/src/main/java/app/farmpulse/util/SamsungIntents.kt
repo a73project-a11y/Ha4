@@ -5,8 +5,8 @@ import android.content.Intent
 import android.provider.Settings
 
 /**
- * Best-effort deep links for One UI 7 / Galaxy S25 Ultra battery and security
- * screens. Samsung does not guarantee these extras; every intent falls back
+ * Best-effort deep links for Samsung One UI battery and security screens.
+ * The OEM does not guarantee these extras; every intent falls back
  * to app details or a generic settings page.
  */
 object SamsungIntents {
