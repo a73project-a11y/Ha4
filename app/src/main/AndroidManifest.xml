@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Overlay countdown / Send chip while a farm session is running. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Silent ongoing chronometer + POST_NOTIFICATIONS on API 33+. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- VibrationEffect only — the raid-due cue never plays a sound. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Raid interval uses AlarmManager.setExactAndAllowWhileIdle, not WorkManager. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+        Only the official Travian Legends package. Do not add QUERY_ALL_PACKAGES —
+        we never scan the device or talk to Travian servers.
+    -->
+    <queries>
+        <package android:name="com.traviangames.travianlegendsmobile" />
+    </queries>
+
+    <application
+        android:name=".FarmPulseApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FarmPulse">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.FarmPulse">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            Optional wake visibility only. Never dismisses a secure keyguard and
+            never clicks Travian by itself. Send still requires isDeviceLocked() == false.
+        -->
+        <activity
+            android:name=".ShowWhenLockedActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.FarmPulse.Overlay"
+            android:turnScreenOn="true" />
+
+        <!--
+            specialUse FGS: holds farm-session timer state, a silent ongoing
+            chronometer notification, and overlay keep-alive while Pavel is
+            farming. It ticks the countdown UI and schedules AlarmManager.
+            It NEVER auto-clicks Travian and never talks to Travian servers.
+            WorkManager is the wrong primitive for an exact user-facing raid
+            interval, so this service exists as the session host.
+        -->
+        <service
+            android:name=".service.FarmSessionService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Farm session timer host: silent chronometer notification, overlay countdown keep-alive, and AlarmManager raid-interval scheduling. Does not auto-click Travian and does not access the network." />
+        </service>
+
+        <service
+            android:name=".service.FarmPulseAccessibilityService"
+            android:exported="true"
+            android:label="@string/a11y_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <receiver
+            android:name=".receiver.RaidAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.farmpulse.action.RAID_DUE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

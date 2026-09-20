@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FarmPulse</string>
+    <string name="a11y_service_label">FarmPulse Travian helper</string>
+    <string name="a11y_service_description">FarmPulse watches Travian Legends only so you can bind one farmlist Send button and later replay that click after you tap Send on the FarmPulse overlay. The timer never clicks Travian by itself. FarmPulse does not read Travian network traffic and does not send troops unless you tap Send.</string>
+    <string name="notification_channel_name">Farm session</string>
+    <string name="notification_channel_desc">Silent chronometer for the active farm interval. Sound is always off — raid-due uses vibration only.</string>
+</resources>

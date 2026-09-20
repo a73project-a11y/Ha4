@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.FarmPulse" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/soil</item>
+        <item name="android:navigationBarColor">@color/soil</item>
+        <item name="android:windowBackground">@color/soil</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.FarmPulse.Overlay" parent="Theme.FarmPulse">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+</resources>
